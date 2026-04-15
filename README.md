@@ -27,6 +27,14 @@ docker compose up -d
 
 Or use your own MongoDB URI.
 
+**`MongoNetworkError: connect ECONNREFUSED 127.0.0.1:27017`** means nothing is listening on Mongo’s port. Fix one of these:
+
+1. **Docker** — Start Docker Desktop, wait until it is running, then run `docker compose up -d` again. Check with `docker compose ps` (container should be “running”).
+2. **MongoDB installed on Windows** — Start the “MongoDB” Windows service (Services app) or run `mongod` so it binds to `127.0.0.1:27017`.
+3. **MongoDB Atlas (cloud)** — Create a free cluster, get the connection string, and set `MONGODB_URI` in `server/.env` (replace `<password>` and allow your IP / `0.0.0.0/0` for testing).
+
+Only start the API **after** Mongo accepts connections.
+
 ### 2. Backend
 
 ```bash
@@ -37,6 +45,8 @@ npm install
 npm run seed
 npm run dev
 ```
+
+Re-run **`npm run seed`** anytime to recreate/reset the three demo accounts and their passwords (useful if you changed them or see “Invalid email or password”).
 
 API defaults to `http://localhost:5000`.
 
@@ -103,9 +113,39 @@ No separate migration files; schema is defined in code. Use `npm run seed` for i
 
 ## Deployment
 
+### Option A: Vercel (frontend + API on one project)
+
+The repo includes `vercel.json` and `api/index.js` so the **Vite build** is static hosting and **Express** runs as a single serverless function (MongoDB must be reachable from the internet, e.g. **MongoDB Atlas**).
+
+1. Push the project to GitHub and [import it in Vercel](https://vercel.com/new). **Root directory:** leave as the repository root (where `vercel.json` lives).
+2. **Environment variables** (Project → Settings → Environment Variables), for *Production* (and Preview if you want):
+
+   | Name | Notes |
+   |------|--------|
+   | `MONGODB_URI` | Atlas connection string (not `127.0.0.1`) |
+   | `JWT_ACCESS_SECRET` | Long random string |
+   | `JWT_REFRESH_SECRET` | Different long random string |
+   | `CLIENT_ORIGIN` | Optional; your site URL, e.g. `https://your-app.vercel.app` or your custom domain. If omitted, `VERCEL_URL` is used for CORS when present. |
+   | `ALLOW_REGISTER` | Optional: `true` / `false` |
+
+3. Do **not** set `VITE_API_URL` for this setup: the browser should call `/api/...` on the same origin.
+4. After deploy, **seed the database** from your machine (same Atlas URI as in Vercel):
+
+   ```bash
+   cd server
+   # Set MONGODB_URI in .env to the same string as Vercel, then:
+   npm run seed
+   ```
+
+5. In Atlas → **Network Access**, allow **`0.0.0.0/0`** (or Vercel’s IPs) so serverless functions can connect.
+
+Local dev is unchanged: run Mongo locally, `server` on port 5000, `client` with Vite proxy.
+
+### Option B: Split hosting
+
 1. Deploy the API (e.g. Render, Railway) with `MONGODB_URI` and JWT secrets set.
-2. Deploy the static frontend (e.g. Vercel, Netlify) with `VITE_API_URL` pointing at the API.
-3. Set `CLIENT_ORIGIN` on the server to your frontend URL for CORS.
+2. Deploy the static frontend (e.g. Vercel, Netlify) with **`VITE_API_URL`** set to the **public API base URL** (no trailing slash), e.g. `https://api.example.com`.
+3. Set **`CLIENT_ORIGIN`** on the API to your frontend URL for CORS.
 
 ## Assessment deliverables checklist
 

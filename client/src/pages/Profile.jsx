@@ -34,36 +34,38 @@ export default function Profile() {
   };
 
   return (
-    <div className="card">
-      <h1>My profile</h1>
-      {error && <div className="error-banner">{error}</div>}
-      {message && <div className="success-banner">{message}</div>}
-      <p className="muted">
-        Role: <strong>{user.role}</strong> (cannot be changed here)
-      </p>
-      <form onSubmit={handleSubmit} className="form-grid">
-        <label>
-          Name
-          <input value={name} onChange={(e) => setName(e.target.value)} required />
-        </label>
-        <label>
-          Email
-          <input value={user.email} disabled />
-        </label>
-        <label>
-          New password (optional)
-          <input
-            type="password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            autoComplete="new-password"
-            placeholder="Leave blank to keep current"
-          />
-        </label>
-        <button type="submit" className="btn btn-primary" disabled={loading}>
-          Save
-        </button>
-      </form>
+    <div className="profile-page">
+      <div className="card profile-card">
+        <h1>My profile</h1>
+        {error && <div className="error-banner">{error}</div>}
+        {message && <div className="success-banner">{message}</div>}
+        <p className="muted">
+          Role: <strong>{user.role}</strong> (cannot be changed here)
+        </p>
+        <form onSubmit={handleSubmit} className="form-grid form-grid--centered">
+          <label>
+            Name
+            <input value={name} onChange={(e) => setName(e.target.value)} required />
+          </label>
+          <label>
+            Email
+            <input value={user.email} disabled />
+          </label>
+          <label>
+            New password (optional)
+            <input
+              type="password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              autoComplete="new-password"
+              placeholder="Leave blank to keep current"
+            />
+          </label>
+          <button type="submit" className="btn btn-primary" disabled={loading}>
+            Save
+          </button>
+        </form>
+      </div>
     </div>
   );
 }

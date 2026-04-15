@@ -18,20 +18,22 @@ const seeds = [
 ];
 
 for (const s of seeds) {
-  const existing = await User.findOne({ email: s.email });
-  if (existing) {
-    console.log('Skip (exists):', s.email);
-    continue;
-  }
   const hash = await bcrypt.hash(s.password, 12);
-  await User.create({
-    name: s.name,
-    email: s.email,
-    password: hash,
-    role: s.role,
-    status: 'active',
-  });
-  console.log('Created:', s.email, `(${s.role})`);
+  const res = await User.updateOne(
+    { email: s.email },
+    {
+      $set: {
+        name: s.name,
+        email: s.email,
+        password: hash,
+        role: s.role,
+        status: 'active',
+      },
+    },
+    { upsert: true }
+  );
+  if (res.upsertedCount) console.log('Created:', s.email, `(${s.role})`);
+  else console.log('Updated (password reset):', s.email, `(${s.role})`);
 }
 
 console.log('\nDefault passwords:');

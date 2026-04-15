@@ -42,7 +42,7 @@ button {
 }
 
 .top-nav {
-  background: #1a1a2e;
+  background: linear-gradient(135deg, #0d47a1 0%, #1976d2 55%, #2196f3 100%);
   color: #fff;
   padding: 0.75rem 1.5rem;
   display: flex;
@@ -50,14 +50,19 @@ button {
   justify-content: space-between;
   gap: 1rem;
   flex-wrap: wrap;
+  box-shadow: 0 2px 12px rgba(13, 71, 161, 0.35);
 }
 
 .top-nav a {
-  color: #e0e0ff;
+  color: #e3f2fd;
 }
 
 .top-nav a:hover {
   color: #fff;
+}
+
+.top-nav .muted {
+  color: rgba(255, 255, 255, 0.88);
 }
 
 .nav-links {
@@ -74,10 +79,13 @@ button {
 
 main {
   flex: 1;
+  display: flex;
+  flex-direction: column;
   padding: 1.5rem;
   max-width: 1100px;
   margin: 0 auto;
   width: 100%;
+  min-height: 0;
 }
 
 .card {
@@ -92,10 +100,117 @@ h1 {
   font-size: 1.5rem;
 }
 
+.dashboard-page {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  padding: 2.5rem 1.75rem;
+  border-radius: 16px;
+  background: linear-gradient(165deg, #e3f2fd 0%, #bbdefb 42%, #c5cae9 100%);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.6);
+}
+
+.dashboard-card {
+  width: 100%;
+  max-width: 520px;
+  text-align: center;
+  background: #fff;
+  box-shadow: 0 8px 32px rgba(13, 71, 161, 0.12);
+}
+
+.dashboard-card ul {
+  list-style: none;
+  padding-left: 0;
+  margin: 1.25rem 0 0;
+}
+
+.dashboard-card li {
+  margin-bottom: 0.6rem;
+}
+
+.dashboard-card .muted {
+  margin-top: 1rem;
+}
+
+.profile-page {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  padding: 2.5rem 1.75rem;
+  border-radius: 16px;
+  background: linear-gradient(165deg, #e3f2fd 0%, #bbdefb 42%, #c5cae9 100%);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.6);
+}
+
+.profile-card {
+  width: 100%;
+  max-width: 440px;
+  text-align: center;
+  background: #fff;
+  box-shadow: 0 8px 32px rgba(13, 71, 161, 0.12);
+}
+
+.profile-card .error-banner,
+.profile-card .success-banner {
+  text-align: center;
+}
+
+.profile-card .form-grid--centered {
+  margin-top: 0.5rem;
+}
+
+.login-page {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1.5rem;
+  background: #f4f5fb;
+}
+
+.login-card {
+  width: 100%;
+  max-width: 440px;
+  text-align: center;
+}
+
+.login-card .error-banner {
+  text-align: center;
+}
+
+.login-hints {
+  font-size: 0.85rem;
+  margin: 0 0 1rem;
+  padding-left: 0;
+  list-style: none;
+}
+
+.login-hints li {
+  margin-bottom: 0.35rem;
+}
+
 .form-grid {
   display: grid;
   gap: 1rem;
   max-width: 420px;
+}
+
+.form-grid--centered {
+  margin: 0 auto;
+  max-width: 320px;
+  width: 100%;
+}
+
+.form-grid--centered label {
+  text-align: left;
+}
+
+.form-grid--centered .btn {
+  width: 100%;
 }
 
 label {

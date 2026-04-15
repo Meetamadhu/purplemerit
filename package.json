@@ -1,0 +1,8 @@
+{
+  "name": "purplemerit",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "vercel-build": "cd client && npm run build"
+  }
+}

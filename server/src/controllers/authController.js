@@ -17,7 +17,7 @@ function userResponse(doc) {
 }
 
 export const loginValidators = [
-  body('email').trim().isEmail().normalizeEmail(),
+  body('email').trim().isEmail(),
   body('password').isString().notEmpty(),
 ];
 
@@ -26,7 +26,8 @@ export async function login(req, res) {
   if (!errors.isEmpty()) {
     return res.status(400).json({ message: 'Validation failed', errors: errors.array() });
   }
-  const { email, password } = req.body;
+  const email = String(req.body.email).trim().toLowerCase();
+  const { password } = req.body;
   const user = await User.findOne({ email }).select('+password');
   if (!user) {
     return res.status(401).json({ message: 'Invalid email or password' });
@@ -60,7 +61,7 @@ export async function login(req, res) {
 
 export const registerValidators = [
   body('name').trim().isLength({ min: 1, max: 120 }),
-  body('email').trim().isEmail().normalizeEmail(),
+  body('email').trim().isEmail(),
   body('password').isString().isLength({ min: 8, max: 128 }),
 ];
 
@@ -72,7 +73,8 @@ export async function register(req, res) {
   if (!errors.isEmpty()) {
     return res.status(400).json({ message: 'Validation failed', errors: errors.array() });
   }
-  const { name, email, password } = req.body;
+  const { name, password } = req.body;
+  const email = String(req.body.email).trim().toLowerCase();
   const exists = await User.findOne({ email });
   if (exists) {
     return res.status(409).json({ message: 'Email already registered' });

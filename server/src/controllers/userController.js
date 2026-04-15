@@ -102,7 +102,7 @@ export async function getUser(req, res) {
 
 const createValidators = [
   body('name').trim().isLength({ min: 1, max: 120 }),
-  body('email').trim().isEmail().normalizeEmail(),
+  body('email').trim().isEmail(),
   body('role').isIn(['admin', 'manager', 'user']),
   body('status').optional().isIn(['active', 'inactive']),
   body('password').optional().isString().isLength({ min: 8, max: 128 }),
@@ -116,7 +116,8 @@ export async function createUser(req, res) {
   if (!errors.isEmpty()) {
     return res.status(400).json({ message: 'Validation failed', errors: errors.array() });
   }
-  const { name, email, role, status = 'active' } = req.body;
+  const { name, role, status = 'active' } = req.body;
+  const email = String(req.body.email).trim().toLowerCase();
   let password = req.body.password;
   if (req.body.autoPassword) {
     password = crypto.randomBytes(12).toString('base64url');
@@ -145,7 +146,7 @@ export async function createUser(req, res) {
 const updateValidators = [
   param('id').isMongoId(),
   body('name').optional().trim().isLength({ min: 1, max: 120 }),
-  body('email').optional().trim().isEmail().normalizeEmail(),
+  body('email').optional().trim().isEmail(),
   body('role').optional().isIn(['admin', 'manager', 'user']),
   body('status').optional().isIn(['active', 'inactive']),
   body('password').optional().isString().isLength({ min: 8, max: 128 }),
@@ -182,13 +183,15 @@ export async function updateUser(req, res) {
     return res.status(400).json({ message: 'Cannot change your own role' });
   }
 
-  if (bodyKeys.includes('email') && req.body.email) {
-    const taken = await User.findOne({ email: req.body.email, _id: { $ne: target._id } });
+  const nextEmail =
+    req.body.email !== undefined ? String(req.body.email).trim().toLowerCase() : undefined;
+  if (bodyKeys.includes('email') && nextEmail) {
+    const taken = await User.findOne({ email: nextEmail, _id: { $ne: target._id } });
     if (taken) return res.status(409).json({ message: 'Email already in use' });
   }
 
   if (req.body.name !== undefined) target.name = req.body.name;
-  if (req.body.email !== undefined) target.email = req.body.email;
+  if (nextEmail !== undefined) target.email = nextEmail;
   if (req.body.status !== undefined) target.status = req.body.status;
   if (req.body.role !== undefined && req.user.role === 'admin') target.role = req.body.role;
   if (req.body.password) {
