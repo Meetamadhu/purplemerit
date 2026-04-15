@@ -1,4 +1,4 @@
-import 'dotenv/config';
+import './loadEnv.js'; // side effect: load server/.env (or cwd / repo root fallback)
 import { connectDb } from './config/db.js';
 import { createApp } from './app.js';
 

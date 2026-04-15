@@ -1,11 +1,19 @@
-import 'dotenv/config';
 import bcrypt from 'bcryptjs';
 import mongoose from 'mongoose';
 import User from './models/User.js';
+import { envLoadedFrom, expectedEnvPath } from './loadEnv.js';
 
-const uri = process.env.MONGODB_URI;
+const uri = process.env.MONGODB_URI?.trim();
 if (!uri) {
-  console.error('Set MONGODB_URI in .env');
+  console.error('MONGODB_URI is missing or empty after loading .env.');
+  if (envLoadedFrom) {
+    console.error('Loaded .env from:', envLoadedFrom);
+  } else {
+    console.error('Create a file at:', expectedEnvPath);
+  }
+  console.error(
+    'Add one line (use double quotes if your password or URI contains #):\n  MONGODB_URI="mongodb+srv://user:pass@host/db?options"'
+  );
   process.exit(1);
 }
 
