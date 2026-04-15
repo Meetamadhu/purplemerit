@@ -9,9 +9,11 @@ const repoRoot = path.join(serverDir, '..');
 
 /** Prefer server/.env, then cwd, then repo root (monorepo). */
 const envCandidates = [
-  path.join(serverDir, '.env'),
-  path.join(process.cwd(), '.env'),
-  path.join(repoRoot, '.env'),
+  ...new Set([
+    path.join(serverDir, '.env'),
+    path.join(process.cwd(), '.env'),
+    path.join(repoRoot, '.env'),
+  ]),
 ];
 
 let loadedFrom = null;
@@ -30,8 +32,9 @@ for (const envPath of envCandidates) {
   break;
 }
 
-if (!loadedFrom) {
-  console.error('No .env file found. Tried:');
+// Render/Vercel etc. inject env vars — no .env file is normal. Only warn for local dev.
+if (!loadedFrom && !process.env.MONGODB_URI) {
+  console.error('No .env file found and MONGODB_URI is unset. Tried:');
   envCandidates.forEach((p) => console.error(' ', p));
 }
 

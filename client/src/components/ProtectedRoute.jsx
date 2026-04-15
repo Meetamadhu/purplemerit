@@ -1,4 +1,5 @@
 import { Navigate, useLocation } from 'react-router-dom';
+import SiteHeader from './SiteHeader.jsx';
 import { useAuth } from '../context/AuthContext.jsx';
 
 export default function ProtectedRoute({ children, roles }) {
@@ -7,8 +8,13 @@ export default function ProtectedRoute({ children, roles }) {
 
   if (!ready) {
     return (
-      <div className="card">
-        <p>Loading…</p>
+      <div className="app-shell">
+        <SiteHeader />
+        <main>
+          <div className="card" style={{ maxWidth: 420, margin: '2rem auto' }}>
+            <p>Loading…</p>
+          </div>
+        </main>
       </div>
     );
   }

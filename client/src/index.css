@@ -77,6 +77,12 @@ button {
   letter-spacing: 0.02em;
 }
 
+.top-nav-end {
+  margin-left: auto;
+  color: rgba(255, 255, 255, 0.9);
+  font-size: 0.9rem;
+}
+
 main {
   flex: 1;
   display: flex;
@@ -164,7 +170,8 @@ h1 {
 }
 
 .login-page {
-  min-height: 100vh;
+  flex: 1;
+  min-height: 0;
   display: flex;
   align-items: center;
   justify-content: center;
