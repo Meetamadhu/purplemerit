@@ -1,5 +1,5 @@
 import { Navigate, useLocation } from 'react-router-dom';
-import SiteHeader from './SiteHeader.jsx';
+import AppHeader from './AppHeader.jsx';
 import { useAuth } from '../context/AuthContext.jsx';
 
 export default function ProtectedRoute({ children, roles }) {
@@ -9,8 +9,11 @@ export default function ProtectedRoute({ children, roles }) {
   if (!ready) {
     return (
       <div className="app-shell">
-        <SiteHeader />
-        <main>
+        <a className="skip-link" href="#main-content">
+          Skip to content
+        </a>
+        <AppHeader />
+        <main id="main-content" tabIndex="-1">
           <div className="card" style={{ maxWidth: 420, margin: '2rem auto' }}>
             <p>Loading…</p>
           </div>

@@ -1,13 +1,57 @@
 import { useEffect, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { api } from '../api/client.js';
+import Breadcrumbs from '../components/Breadcrumbs.jsx';
+import EmptyState from '../components/EmptyState.jsx';
+import Skeleton from '../components/Skeleton.jsx';
+import { useToast } from '../components/ToastProvider.jsx';
 import { useAuth } from '../context/AuthContext.jsx';
+
+function validateUserForm({ name, email, password, autoPassword, isCreate }) {
+  const errors = {};
+
+  if (!name.trim()) {
+    errors.name = 'Enter a full name.';
+  } else if (name.trim().length < 2) {
+    errors.name = 'Name must be at least 2 characters.';
+  }
+
+  if (!email.trim()) {
+    errors.email = 'Enter an email address.';
+  } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+    errors.email = 'Enter a valid email address.';
+  }
+
+  if (isCreate && !autoPassword && !password) {
+    errors.password = 'Enter a temporary password or choose auto-generate.';
+  } else if (password && password.length < 8) {
+    errors.password = 'Password must be at least 8 characters.';
+  }
+
+  return errors;
+}
+
+function getPasswordStrength(password) {
+  if (!password) return null;
+
+  let score = 0;
+  if (password.length >= 8) score += 1;
+  if (/[A-Z]/.test(password)) score += 1;
+  if (/[a-z]/.test(password)) score += 1;
+  if (/\d/.test(password)) score += 1;
+  if (/[^A-Za-z0-9]/.test(password)) score += 1;
+
+  if (score <= 2) return { label: 'Weak', tone: 'danger' };
+  if (score === 3 || score === 4) return { label: 'Medium', tone: 'warning' };
+  return { label: 'Strong', tone: 'success' };
+}
 
 export default function UserForm() {
   const { id } = useParams();
   const isCreate = !id;
   const navigate = useNavigate();
   const { isAdmin } = useAuth();
+  const toast = useToast();
 
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
@@ -18,6 +62,13 @@ export default function UserForm() {
   const [error, setError] = useState('');
   const [generatedPassword, setGeneratedPassword] = useState('');
   const [loading, setLoading] = useState(!isCreate);
+  const [saving, setSaving] = useState(false);
+  const [touched, setTouched] = useState({});
+  const [showPassword, setShowPassword] = useState(false);
+
+  const validationErrors = validateUserForm({ name, email, password, autoPassword, isCreate });
+  const passwordStrength = getPasswordStrength(password);
+  const fieldError = (field) => (touched[field] ? validationErrors[field] : '');
 
   useEffect(() => {
     if (isCreate) return;
@@ -46,44 +97,62 @@ export default function UserForm() {
     e.preventDefault();
     setError('');
     setGeneratedPassword('');
+    setTouched({ name: true, email: true, password: true });
+    if (Object.keys(validationErrors).length) {
+      setError('Please correct the highlighted fields before creating the user.');
+      return;
+    }
+    setSaving(true);
     try {
       const body = { name, email, role, status, autoPassword };
       if (!autoPassword) {
-        if (!password) {
-          setError('Password required unless auto-generate is checked');
-          return;
-        }
         body.password = password;
       }
       const { data } = await api.post('/api/users', body);
       if (data.generatedPassword) {
+        toast.success('User created. Share the generated password securely.');
         setGeneratedPassword(data.generatedPassword);
       } else {
+        toast.success('User created successfully.');
         navigate(`/users/${data.user._id || data.user.id}`);
       }
     } catch (err) {
-      setError(err.response?.data?.message || 'Create failed');
+      const nextError = err.response?.data?.message || 'Create failed';
+      setError(nextError);
+      toast.error(nextError);
+    } finally {
+      setSaving(false);
     }
   };
 
   const submitUpdate = async (e) => {
     e.preventDefault();
     setError('');
+    setTouched({ name: true, email: true });
+    if (Object.keys(validationErrors).length) {
+      setError('Please correct the highlighted fields before saving.');
+      return;
+    }
+    setSaving(true);
     try {
       const body = { name, email, status };
       if (isAdmin) body.role = role;
-      if (password) body.password = password;
       await api.patch(`/api/users/${id}`, body);
+      toast.success('User changes saved.');
       navigate(`/users/${id}`);
     } catch (err) {
-      setError(err.response?.data?.message || 'Update failed');
+      const nextError = err.response?.data?.message || 'Update failed';
+      setError(nextError);
+      toast.error(nextError);
+    } finally {
+      setSaving(false);
     }
   };
 
   if (!isCreate && loading) {
     return (
       <div className="card">
-        <p>Loading…</p>
+        <Skeleton variant="detail" />
       </div>
     );
   }
@@ -91,8 +160,12 @@ export default function UserForm() {
   if (isCreate && !isAdmin) {
     return (
       <div className="card">
-        <div className="error-banner">Only admins can create users.</div>
-        <Link to="/users">Back</Link>
+        <EmptyState
+          icon="Locked"
+          title="Only admins can create users"
+          description="Switch to an administrator account if you need to add a new user."
+          action={<Link to="/users" className="btn btn-secondary">Back to users</Link>}
+        />
       </div>
     );
   }
@@ -100,9 +173,10 @@ export default function UserForm() {
   if (generatedPassword) {
     return (
       <div className="card">
+        <Breadcrumbs items={[{ label: 'Dashboard', to: '/' }, { label: 'Users', to: '/users' }, { label: 'User created' }]} />
         <h1>User created</h1>
-        <p>Copy this temporary password and share it securely:</p>
-        <p style={{ fontFamily: 'monospace', fontSize: '1.1rem' }}>{generatedPassword}</p>
+        <p>Share this temporary password securely. The user should change it on first sign-in.</p>
+        <p className="generated-password">{generatedPassword}</p>
         <Link to="/users" className="btn btn-primary" style={{ display: 'inline-block', marginTop: '1rem' }}>
           Back to users
         </Link>
@@ -110,65 +184,150 @@ export default function UserForm() {
     );
   }
 
+  const formHeadline = isCreate ? 'User Details' : 'Edit user';
+
   return (
-    <div className="card">
-      <h1>{isCreate ? 'Create user' : 'Edit user'}</h1>
-      {error && <div className="error-banner">{error}</div>}
-      <form className="form-grid" onSubmit={isCreate ? submitCreate : submitUpdate}>
-        <label>
-          Name
-          <input value={name} onChange={(e) => setName(e.target.value)} required />
+    <div className={`user-form-page${isCreate ? ' user-form-page--new' : ''}`}>
+      <div className="card login-card user-form-card">
+        <Breadcrumbs
+          items={[
+            { label: 'Dashboard', to: '/' },
+            { label: 'Users', to: '/users' },
+            { label: formHeadline },
+          ]}
+        />
+        <h1>{formHeadline}</h1>
+        {error && (
+          <div className="error-banner" role="alert">
+            {error}
+          </div>
+        )}
+        <form className="form-grid" onSubmit={isCreate ? submitCreate : submitUpdate} aria-busy={saving}>
+        <label htmlFor="user-name">
+          <span className="field-label-text">
+            Name <span className="required-mark">*</span>
+          </span>
+          <input
+            id="user-name"
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            onBlur={() => setTouched((current) => ({ ...current, name: true }))}
+            aria-invalid={Boolean(fieldError('name'))}
+            aria-describedby={fieldError('name') ? 'user-name-error' : undefined}
+            required
+          />
+          {fieldError('name') && (
+            <span id="user-name-error" className="field-error" role="alert">
+              {fieldError('name')}
+            </span>
+          )}
         </label>
-        <label>
-          Email
-          <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} required />
+        <label htmlFor="user-email">
+          <span className="field-label-text">
+            Email <span className="required-mark">*</span>
+          </span>
+          <input
+            id="user-email"
+            type="email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            onBlur={() => setTouched((current) => ({ ...current, email: true }))}
+            aria-invalid={Boolean(fieldError('email'))}
+            aria-describedby={fieldError('email') ? 'user-email-error' : undefined}
+            required
+          />
+          {fieldError('email') && (
+            <span id="user-email-error" className="field-error" role="alert">
+              {fieldError('email')}
+            </span>
+          )}
         </label>
         {isAdmin && (
-          <label>
-            Role
-            <select value={role} onChange={(e) => setRole(e.target.value)}>
+          <label htmlFor="user-role">
+            <span className="field-label-text">Role</span>
+            <select id="user-role" value={role} onChange={(e) => setRole(e.target.value)}>
               <option value="user">User</option>
               <option value="manager">Manager</option>
               <option value="admin">Admin</option>
             </select>
           </label>
         )}
-        <label>
-          Status
-          <select value={status} onChange={(e) => setStatus(e.target.value)}>
+        <label htmlFor="user-status">
+          <span className="field-label-text">Status</span>
+          <select id="user-status" value={status} onChange={(e) => setStatus(e.target.value)}>
             <option value="active">Active</option>
             <option value="inactive">Inactive</option>
           </select>
         </label>
         {isCreate && (
           <>
-            <label style={{ flexDirection: 'row', alignItems: 'center', gap: '0.5rem' }}>
-              <input type="checkbox" checked={autoPassword} onChange={(e) => setAutoPassword(e.target.checked)} />
+            <label htmlFor="user-auto-password" className="checkbox-label">
+              <input id="user-auto-password" type="checkbox" checked={autoPassword} onChange={(e) => setAutoPassword(e.target.checked)} />
               Auto-generate password
             </label>
+            <span className="helper-text">
+              {autoPassword
+                ? 'A secure temporary password will be generated after creation.'
+                : 'Set a temporary password now or switch to auto-generate.'}
+            </span>
             {!autoPassword && (
-              <label>
-                Password
-                <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} autoComplete="new-password" />
+              <label htmlFor="user-password">
+                <span className="field-label-text">
+                  Password <span className="required-mark">*</span>
+                </span>
+                <div className="field-input-group">
+                  <input
+                    id="user-password"
+                    type={showPassword ? 'text' : 'password'}
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    onBlur={() => setTouched((current) => ({ ...current, password: true }))}
+                    autoComplete="new-password"
+                    aria-invalid={Boolean(fieldError('password'))}
+                    aria-describedby={fieldError('password') ? 'user-password-error' : 'user-password-help'}
+                  />
+                  <button
+                    type="button"
+                    className="btn btn-secondary btn-inline"
+                    onClick={() => setShowPassword((current) => !current)}
+                    aria-label={showPassword ? 'Hide password' : 'Show password'}
+                  >
+                    {showPassword ? 'Hide' : 'Show'}
+                  </button>
+                </div>
+                {fieldError('password') ? (
+                  <span id="user-password-error" className="field-error" role="alert">
+                    {fieldError('password')}
+                  </span>
+                ) : (
+                  <span id="user-password-help" className="helper-text">
+                    Use at least 8 characters with a mix of upper, lower, number, and symbol.
+                  </span>
+                )}
+                {passwordStrength && <span className={`password-strength password-strength-${passwordStrength.tone}`}>Strength: {passwordStrength.label}</span>}
               </label>
             )}
           </>
         )}
         {!isCreate && (
-          <label>
-            New password (optional)
-            <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} autoComplete="new-password" />
-          </label>
+          <p className="helper-text user-form-password-note">
+            Passwords can only be changed by the user themselves from{' '}
+            <Link to="/profile">My profile</Link>.
+          </p>
         )}
-        <div style={{ display: 'flex', gap: '0.5rem' }}>
-          <button type="submit" className="btn btn-primary">
-            {isCreate ? 'Create' : 'Save'}
+        <div className="form-actions-row">
+          <button type="submit" className="btn btn-primary" disabled={saving}>
+            {saving ? 'Saving…' : isCreate ? 'Create' : 'Save'}
           </button>
-          <Link to={isCreate ? '/users' : `/users/${id}`} className="btn btn-secondary" style={{ display: 'inline-flex', alignItems: 'center' }}>
+          <Link
+            to={isCreate ? '/users' : `/users/${id}`}
+            className="btn btn-secondary form-actions-row__link"
+          >
             Cancel
           </Link>
         </div>
       </form>
+      </div>
     </div>
   );
 }

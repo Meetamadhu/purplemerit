@@ -16,6 +16,13 @@ async function canReadUser(actor, target) {
 }
 
 async function canUpdateUser(actor, target, bodyKeys) {
+  if (bodyKeys.includes('password') && actor.id !== target._id.toString()) {
+    return {
+      ok: false,
+      code: 403,
+      message: 'Password can only be changed by the account owner (e.g. from their profile).',
+    };
+  }
   if (actor.id === target._id.toString()) {
     const allowed = new Set(['name', 'password']);
     const forbidden = bodyKeys.filter((k) => !allowed.has(k));

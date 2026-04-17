@@ -1,6 +1,11 @@
 import { useEffect, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { api } from '../api/client.js';
+import Breadcrumbs from '../components/Breadcrumbs.jsx';
+import ConfirmDialog from '../components/ConfirmDialog.jsx';
+import EmptyState from '../components/EmptyState.jsx';
+import Skeleton from '../components/Skeleton.jsx';
+import { useToast } from '../components/ToastProvider.jsx';
 import { useAuth } from '../context/AuthContext.jsx';
 
 function AuditBlock({ label, refUser, at }) {
@@ -29,10 +34,12 @@ export default function UserDetail() {
   const { id } = useParams();
   const navigate = useNavigate();
   const { user: me, isAdmin } = useAuth();
+  const toast = useToast();
   const [user, setUser] = useState(null);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(true);
   const [actionMsg, setActionMsg] = useState('');
+  const [confirmOpen, setConfirmOpen] = useState(false);
 
   const load = async () => {
     setLoading(true);
@@ -54,25 +61,35 @@ export default function UserDetail() {
   }, [id]);
 
   const deactivate = async () => {
-    if (!window.confirm('Deactivate this user? They will not be able to sign in.')) return;
+    setConfirmOpen(false);
     setActionMsg('');
     try {
       await api.patch(`/api/users/${id}/deactivate`);
       setActionMsg('User deactivated.');
+      toast.success('The user has been deactivated.');
       await load();
     } catch (err) {
-      setActionMsg(err.response?.data?.message || 'Failed');
+      const nextMessage = err.response?.data?.message || 'Failed';
+      setActionMsg(nextMessage);
+      toast.error(nextMessage);
     }
   };
 
-  if (loading) return <div className="card"><p>Loading…</p></div>;
+  if (loading) return <div className="card"><Skeleton variant="detail" /></div>;
   if (error || !user) {
     return (
       <div className="card">
-        <div className="error-banner">{error || 'Not found'}</div>
-        <button type="button" className="btn btn-secondary" onClick={() => navigate(-1)}>
-          Back
-        </button>
+        <Breadcrumbs items={[{ label: 'Dashboard', to: '/' }, { label: 'Users', to: '/users' }, { label: 'Unavailable' }]} />
+        <EmptyState
+          icon="User"
+          title="User not found"
+          description={error || 'This record may have been removed or the link is no longer valid.'}
+          action={
+            <button type="button" className="btn btn-secondary" onClick={() => navigate(-1)}>
+              Go back
+            </button>
+          }
+        />
       </div>
     );
   }
@@ -82,8 +99,13 @@ export default function UserDetail() {
 
   return (
     <div className="card">
+      <Breadcrumbs items={[{ label: 'Dashboard', to: '/' }, { label: 'Users', to: '/users' }, { label: user.name }]} />
       <h1>{user.name}</h1>
-      {actionMsg && <div className="success-banner">{actionMsg}</div>}
+      {actionMsg && (
+        <div className={user.status === 'inactive' ? 'success-banner' : 'error-banner'} role="status">
+          {actionMsg}
+        </div>
+      )}
       <p>
         <span className={`badge badge-${user.role}`}>{user.role}</span>{' '}
         <span className={`badge badge-${user.status}`}>{user.status}</span>
@@ -101,7 +123,7 @@ export default function UserDetail() {
           </Link>
         )}
         {isAdmin && user.status === 'active' && !isSelf && (
-          <button type="button" className="btn btn-danger" onClick={deactivate}>
+          <button type="button" className="btn btn-danger" onClick={() => setConfirmOpen(true)}>
             Deactivate
           </button>
         )}
@@ -109,6 +131,14 @@ export default function UserDetail() {
           Back to list
         </Link>
       </div>
+      <ConfirmDialog
+        open={confirmOpen}
+        title="Deactivate user"
+        message="This will block the user from signing in until an administrator reactivates the account."
+        confirmLabel="Deactivate"
+        onConfirm={deactivate}
+        onCancel={() => setConfirmOpen(false)}
+      />
     </div>
   );
 }
