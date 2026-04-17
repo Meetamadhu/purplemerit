@@ -46,7 +46,7 @@ export default function Login() {
               <div className="error-banner" role="alert">{error}</div>
             )}
 
-            <form className="form" onSubmit={handleSubmit}>
+            <form className="form" onSubmit={handleSubmit} style={{borderLeft: '6px solid #1e8449', padding: '1.5rem', marginBottom: '2rem'}}>
               <div className="form-group">
                 <label>Email</label>
                 <input

@@ -202,7 +202,7 @@ export default function UserForm() {
             {error}
           </div>
         )}
-        <form className="form-grid" onSubmit={isCreate ? submitCreate : submitUpdate} aria-busy={saving}>
+        <form className="form-grid" onSubmit={isCreate ? submitCreate : submitUpdate} aria-busy={saving} style={{borderLeft: '6px solid #1e8449', padding: '1.5rem', marginBottom: '2rem'}}>
         <label htmlFor="user-name">
           <span className="field-label-text">
             Name <span className="required-mark">*</span>

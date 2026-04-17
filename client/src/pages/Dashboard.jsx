@@ -14,7 +14,7 @@ export default function Dashboard() {
     'You are signed in. Use the links below for the actions available to your account.';
 
   return (
-    <div className="page-container">
+    <div className="page-container side-bordered-container">
       {/* Header */}
       <div className="page-header">
         <div>
@@ -26,7 +26,7 @@ export default function Dashboard() {
       </div>
 
       {/* Role Info */}
-      <div className="card">
+        <div className="card" style={{borderLeft: '6px solid #1e8449'}}>
         <span className={`badge badge-${user.role}`}>{user.role}</span>
 
         <p className="text-muted" style={{ marginTop: '8px' }}>
@@ -36,8 +36,8 @@ export default function Dashboard() {
 
       {/* Actions */}
       <div className="dashboard-grid">
-        <div className="card action-card">
-          <h2>Profile</h2>
+        <div className="card action-card" style={{borderLeft: '6px solid #1e8449'}}>
+            <h2>Profile</h2>
           <p className="text-muted">View and update your personal details and password.</p>
           <Link to="/profile" className="btn btn-primary">
             Open Profile
@@ -45,10 +45,10 @@ export default function Dashboard() {
         </div>
 
         {canManageUsers && (
-          <div className="card action-card">
-            <h2>{isAdmin ? 'Administration' : 'User Management'}</h2>
+          <div className="card action-card" style={{borderLeft: '6px solid #1e8449'}}>
+              <h2>{isAdmin ? 'Administration' : 'User Management'}</h2>
             <p className="text-muted">Manage users, roles, and permissions.</p>
-            <Link to="/users" className="btn btn-primary">
+            <Link to="/users" className="btn btn-dark">
               Manage Users
             </Link>
           </div>

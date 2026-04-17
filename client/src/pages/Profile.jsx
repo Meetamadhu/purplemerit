@@ -63,8 +63,10 @@ export default function Profile() {
 
   return (
     <div className="profile-page">
-      <div className="card login-card profile-card">
-        <h1>My profile</h1>
+      <div className="card login-card profile-card" style={{borderLeft: '6px solid #1e8449', padding: '1.5rem', marginBottom: '2rem'}}>
+        <div className="success-banner" style={{marginBottom: 0}}>
+          <h1 style={{margin: 0}}>My profile</h1>
+        </div>
         {error && (
           <div className="error-banner" role="alert">
             {error}
@@ -78,7 +80,7 @@ export default function Profile() {
         <p className="muted">
           Role: <strong>{user.role}</strong> (cannot be changed here)
         </p>
-        <form onSubmit={handleSubmit} className="form-grid form-grid--centered" aria-busy={loading}>
+        <form onSubmit={handleSubmit} className="form-grid form-grid--centered success-banner" aria-busy={loading}>
           <label htmlFor="profile-name">
             <span className="field-label-text">
               Name <span className="required-mark">*</span>

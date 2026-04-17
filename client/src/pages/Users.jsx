@@ -85,13 +85,13 @@ export default function Users() {
 
       {/* Error */}
       {error && (
-        <div className="card">
+        <div className="card" style={{borderLeft: '6px solid #1e8449'}}>
           <p className="text-danger">{error}</p>
         </div>
       )}
 
       {/* Filters */}
-      <div className="card">
+      <div className="card" style={{borderLeft: '6px solid #1e8449'}}>
         <div className="filter-grid">
           <input
             className="input"
@@ -144,7 +144,7 @@ export default function Users() {
       </div>
 
       {/* Table */}
-      <div className="card">
+      <div className="card" style={{borderLeft: '6px solid #1e8449'}}>
 
         {loading ? (
           <Skeleton variant="table" rows={6} />
